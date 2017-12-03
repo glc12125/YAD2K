@@ -5,6 +5,8 @@ import colorsys
 import imghdr
 import os
 import random
+import glob
+from datetime import datetime
 
 import numpy as np
 from keras import backend as K
@@ -52,6 +54,12 @@ parser.add_argument(
     help='threshold for non max suppression IOU, default .5',
     default=.5)
 
+PATH_TO_LABELLED_TEST_IMAGES_DIR = '/Users/liangchuangu/Development/machine_learning/YAD2K/images/testout/'
+TEST_IMAGE_PATHS = glob.glob('/Users/liangchuangu/Downloads/TrainIJCNN2013/*.jpg')
+
+prohibitory = {0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 15, 16}
+mandatory = {33, 34, 35, 36, 37, 38, 39, 40}
+danger = {11, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31}
 
 def _main(args):
     model_path = os.path.expanduser(args.model_path)
@@ -114,7 +122,15 @@ def _main(args):
         score_threshold=args.score_threshold,
         iou_threshold=args.iou_threshold)
 
+    fp = open(os.path.join(output_path, 'ex_p.txt'),'w')
+    fm = open(os.path.join(output_path, 'ex_m.txt'),'w')
+    fd = open(os.path.join(output_path, 'ex_d.txt'),'w')
+    fo = open(os.path.join(output_path, 'ex_o.txt'),'w')
+    counter = 0
+    total = len(os.listdir(test_path))
     for image_file in os.listdir(test_path):
+        counter = counter + 1
+        start=datetime.now()
         try:
             image_type = imghdr.what(os.path.join(test_path, image_file))
             if not image_type:
@@ -147,6 +163,7 @@ def _main(args):
                 K.learning_phase(): 0
             })
         print('Found {} boxes for {}'.format(len(out_boxes), image_file))
+        print("{0:.2f}%".format(counter/total * 100) + "% #============ Labelling image " + str(counter) + " over " + str(total) + " images ============#")
 
         font = ImageFont.truetype(
             font='font/FiraMono-Medium.otf',
@@ -169,6 +186,17 @@ def _main(args):
             bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
             right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
             print(label, (left, top), (right, bottom))
+            # Save to ex.txt for benchmark
+            box_str = str(left) + ";" + str(top) + ";" + str(right) + ";" + str(bottom)
+            if c in prohibitory:
+                fp.write(image_file.split('.')[0] + ".ppm" + ";" + box_str + "\n")
+            elif c in mandatory:
+                fm.write(image_file.split('.')[0] + ".ppm" + ";" + box_str + "\n")
+            elif c in danger:
+                fd.write(image_file.split('.')[0] + ".ppm" + ";" + box_str + "\n")
+            else:
+                fo.write(image_file.split('.')[0] + ".ppm" + ";" + box_str + "\n")
+            #print(" [" + box_str + ";" + str(int(classes[0][idx])) + "] ")
 
             if top - label_size[1] >= 0:
                 text_origin = np.array([left, top - label_size[1]])
@@ -185,9 +213,13 @@ def _main(args):
                 fill=colors[c])
             draw.text(text_origin, label, fill=(0, 0, 0), font=font)
             del draw
-
+        print("#============ Elapsed time: " + str((datetime.now()-start).total_seconds() * 1000) + " ms ============#\n")
         image.save(os.path.join(output_path, image_file), quality=90)
     sess.close()
+    fp.close()
+    fm.close()
+    fd.close()
+    fo.close()
 
 
 if __name__ == '__main__':

@@ -227,7 +227,7 @@ def create_model(anchors, class_names, load_pretrained=True, freeze_body=True):
 
     return model_body, model
 
-def train(model, class_names, anchors, image_data, boxes, detectors_mask, matching_true_boxes, validation_split=0.1):
+def train(model, class_names, anchors, image_data, boxes, detectors_mask, matching_true_boxes, validation_split=0.2):
     '''
     retrain/fine-tune the model
 
@@ -248,34 +248,29 @@ def train(model, class_names, anchors, image_data, boxes, detectors_mask, matchi
                                  save_weights_only=True, save_best_only=True)
     early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=15, verbose=1, mode='auto')
 
-    model.fit([image_data, boxes, detectors_mask, matching_true_boxes],
-              np.zeros(len(image_data)),
-              validation_split=validation_split,
-              batch_size=32,
-              epochs=5,
-              callbacks=[logging])
-    model.save_weights('trained_stage_1.h5')
+    #model.fit([image_data, boxes, detectors_mask, matching_true_boxes],
+    #          np.zeros(len(image_data)),
+    #          validation_split=validation_split,
+    #          batch_size=32,
+    #          epochs=5,
+    #          callbacks=[logging])
+    #model.save_weights('trained_stage_1.h5')
+    #model_body, model = create_model(anchors, class_names, load_pretrained=False, freeze_body=False)
+    #model.load_weights('trained_stage_1.h5')
+    #model.compile(
+    #    optimizer='adam', loss={
+    #        'yolo_loss': lambda y_true, y_pred: y_pred
+    #    })
+    # This is a hack to use the custom loss function in the last layer.
+    #model.fit([image_data, boxes, detectors_mask, matching_true_boxes],
+    #          np.zeros(len(image_data)),
+    #          validation_split=validation_split,
+    #          batch_size=8,
+    #          epochs=30,
+    #          callbacks=[logging])
+    #  #model.save_weights('trained_stage_2.h5')
 
-    model_body, model = create_model(anchors, class_names, load_pretrained=False, freeze_body=False)
-
-    model.load_weights('trained_stage_1.h5')
-
-    model.compile(
-        optimizer='adam', loss={
-            'yolo_loss': lambda y_true, y_pred: y_pred
-        })  # This is a hack to use the custom loss function in the last layer.
-
-
-    model.fit([image_data, boxes, detectors_mask, matching_true_boxes],
-              np.zeros(len(image_data)),
-              validation_split=validation_split,
-              batch_size=8,
-              epochs=30,
-              callbacks=[logging])
-
-    model.save_weights('trained_stage_2.h5')
-
-    #model.load_weights('trained_stage_3_best.h5')
+    model.load_weights('trained_stage_3_best.h5')
 
     model.fit([image_data, boxes, detectors_mask, matching_true_boxes],
               np.zeros(len(image_data)),

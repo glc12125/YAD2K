@@ -65,15 +65,15 @@ def _main(args):
 
     model_body, model = create_model(anchors, class_names)
 
-    train(
-        model,
-        class_names,
-        anchors,
-        image_data,
-        boxes,
-        detectors_mask,
-        matching_true_boxes
-    )
+    #train(
+    #    model,
+    #    class_names,
+    #    anchors,
+    #    image_data,
+    #    boxes,
+    #    detectors_mask,
+    #    matching_true_boxes
+    #)
 
     draw(model_body,
         class_names,
@@ -308,9 +308,9 @@ def draw(model_body, class_names, anchors, image_data, image_set='val',
 
 
     # Use to grnerate weights for test_yolo.py
-    #print(model_body.summary())
-    #model_body.save('{}'.format("retrained_yolo.h5"))
-    #print('Saved Keras model to {}'.format("retrained_yolo.h5"))
+    print(model_body.summary())
+    model_body.save('{}'.format("retrained_yolo.h5"))
+    print('Saved Keras model to {}'.format("retrained_yolo.h5"))
 
     # Create output variables for prediction.
     yolo_outputs = yolo_head(model_body.output, anchors, len(class_names))
