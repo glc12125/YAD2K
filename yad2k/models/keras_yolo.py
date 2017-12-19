@@ -11,6 +11,7 @@ from keras.models import Model
 from ..utils import compose
 from .keras_darknet19 import (DarknetConv2D, DarknetConv2D_BN_Leaky,
                               darknet_body)
+from .keras_darknetref import (darknetref_body)
 
 sys.path.append('..')
 
@@ -62,6 +63,11 @@ def yolo_body(inputs, num_anchors, num_classes):
     x = DarknetConv2D(num_anchors * (num_classes + 5), (1, 1))(x)
     return Model(inputs, x)
 
+def tiny_yolo_body(inputs, num_anchors, num_classes):
+    """Create Tiny YOLO model CNN body in Keras."""
+    darknetref = Model(inputs, darknetref_body()(inputs))
+    x = DarknetConv2D(num_anchors * (num_classes + 5), (1, 1))(darknetref.output)
+    return Model(inputs, x)
 
 def yolo_head(feats, anchors, num_classes):
     """Convert final layer features to bounding box parameters.
@@ -262,6 +268,11 @@ def yolo_loss(args,
                          (1 - detectors_mask))
     no_objects_loss = no_object_weights * K.square(-pred_confidence)
 
+    if print_loss:
+        print('detectors_mask shape: ', detectors_mask.shape)
+        print('best_ious shape: ', best_ious.shape)
+        print('pred_confidence shape: ', pred_confidence.shape)
+        print('K.square(best_ious - pred_confidence) shape: ', K.square(best_ious - pred_confidence).shape)
     if rescore_confidence:
         objects_loss = (object_scale * detectors_mask *
                         K.square(best_ious - pred_confidence))
