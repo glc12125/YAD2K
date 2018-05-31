@@ -5,6 +5,7 @@ import colorsys
 import imghdr
 import os
 import random
+import time
 
 import numpy as np
 from keras import backend as K
@@ -139,6 +140,7 @@ def _main(args):
         image_data /= 255.
         image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
 
+        start = time.time()
         out_boxes, out_scores, out_classes = sess.run(
             [boxes, scores, classes],
             feed_dict={
@@ -146,13 +148,15 @@ def _main(args):
                 input_image_shape: [image.size[1], image.size[0]],
                 K.learning_phase(): 0
             })
-        print('Found {} boxes for {}'.format(len(out_boxes), image_file))
+        end = time.time()
+        print('Found {} boxes for {}, time: {}'.format(len(out_boxes), image_file, (end - start)* 1000))
 
         font = ImageFont.truetype(
             font='font/FiraMono-Medium.otf',
             size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
         thickness = (image.size[0] + image.size[1]) // 300
 
+        label_file = open(os.path.join(test_path, image_file + ".txt"),"w")
         for i, c in reversed(list(enumerate(out_classes))):
             predicted_class = class_names[c]
             box = out_boxes[i]
@@ -169,6 +173,7 @@ def _main(args):
             bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
             right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
             print(label, (left, top), (right, bottom))
+            label_file.write(predicted_class + ": " + str(top) + ", " + str(left) + ", " + str(right - left) + ", " + str(bottom - top) + ", " + '{:.2f}'.format(score))
 
             if top - label_size[1] >= 0:
                 text_origin = np.array([left, top - label_size[1]])
@@ -186,6 +191,7 @@ def _main(args):
             draw.text(text_origin, label, fill=(0, 0, 0), font=font)
             del draw
 
+        label_file.close()
         image.save(os.path.join(output_path, image_file), quality=90)
     sess.close()
 

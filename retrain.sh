@@ -1,0 +1,1 @@
+python3 retrain_yolo.py --data_path "../DATA/my_dataset.npz" --classes_path "../DATA/gtsdb_classes.txt"

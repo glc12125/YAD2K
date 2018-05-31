@@ -55,4 +55,4 @@ dependencies:
   - pydot-ng==1.0.0
   - tensorflow-gpu==1.0.1
   - theano==0.9.0
-prefix: /home/allan/anaconda3/envs/yad2k
+prefix: /Users/liangchuangu/anaconda3/envs/yad2k
